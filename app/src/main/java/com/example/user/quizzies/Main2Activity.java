@@ -85,7 +85,7 @@ public class Main2Activity extends AppCompatActivity
     private TextView ques;
 //    private String question;
     private String[] quesArray = {"DOG", "CAT", "COMPUTER", "BOTTLE", "KEYBOARD", "HANDPHONE", "SANDAL"};
-    private DatabaseReference databaseReference;
+    private DatabaseReference mDatabase;
     private String question;
 
     ImageView navUserPic;
@@ -131,7 +131,24 @@ public class Main2Activity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        databaseReference = FirebaseDatabase.getInstance().getReference();
+//        mDatabase = FirebaseDatabase.getInstance().getReference().child("Questions");
+//        mDatabase.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
+//                    String post =  postSnapshot.getValue(String.class);
+//                    Log.e(TAG, "ASDASDASD");
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
+
+
+//        databaseReference = FirebaseDatabase.getInstance().getReference();
         resultTxt= (TextView) findViewById(R.id.result);
         ques = (TextView) findViewById(R.id.ques);
 
