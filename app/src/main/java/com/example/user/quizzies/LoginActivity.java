@@ -56,11 +56,11 @@ public class LoginActivity extends AppCompatActivity {
                         //.setLogo(R.drawable.icon)
                         .setAvailableProviders(
                                 Arrays.asList(
-                                        new AuthUI.IdpConfig.Builder(AuthUI.PHONE_VERIFICATION_PROVIDER).build(),
+                                        //new AuthUI.IdpConfig.Builder(AuthUI.PHONE_VERIFICATION_PROVIDER).build(),
                                         new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
-                                        new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
-                                        new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build(),
-                                        new AuthUI.IdpConfig.Builder(AuthUI.TWITTER_PROVIDER).build()
+                                        //new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build(),
+                                        //new AuthUI.IdpConfig.Builder(AuthUI.TWITTER_PROVIDER).build(),
+                                        new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build()
                                 )
                         )
                         .setTosUrl(GOOGLE_TOS_URL)
@@ -87,15 +87,16 @@ public class LoginActivity extends AppCompatActivity {
 
         // Successfully signed in
         if (resultCode == RESULT_OK) {
-            Intent i = new Intent(getApplicationContext(), Main2Activity.class);
-            startActivity(i);
+            Intent intent = new Intent(getApplicationContext(), Main2Activity.class);
+            startActivity(intent);
             finish();
             return;
         } else {
             // Sign in failed
             if (response == null) {
                 // User pressed back button
-                showSnackbar(R.string.sign_in_cancelled);
+                //showSnackbar(R.string.sign_in_cancelled);
+                finish();
                 return;
             }
 
@@ -114,6 +115,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showSnackbar(@StringRes int errorMessageRes) {
-        Snackbar.make(mRootView, errorMessageRes, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(findViewById(android.R.id.content), errorMessageRes, Snackbar.LENGTH_LONG).show();
     }
 }

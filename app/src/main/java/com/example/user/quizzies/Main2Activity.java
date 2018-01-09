@@ -1,6 +1,7 @@
 package com.example.user.quizzies;
 
 import android.*;
+import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -29,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -45,6 +47,15 @@ import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
 import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
+import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -72,9 +83,14 @@ public class Main2Activity extends AppCompatActivity
     private ImageView mMainImage;
     private TextView resultTxt;
     private TextView ques;
-    private String question;
+//    private String question;
     private String[] quesArray = {"DOG", "CAT", "COMPUTER", "BOTTLE", "KEYBOARD", "HANDPHONE", "SANDAL"};
+    private DatabaseReference databaseReference;
+    private String question;
 
+    ImageView navUserPic;
+    TextView navUserName;
+    TextView navUserEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,10 +131,14 @@ public class Main2Activity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        databaseReference = FirebaseDatabase.getInstance().getReference();
         resultTxt= (TextView) findViewById(R.id.result);
         ques = (TextView) findViewById(R.id.ques);
+
         question = randomizeQues();
+//        randomizeQues();
         mMainImage = (ImageView) findViewById(R.id.main_image);
+
     }
 
     @Override
@@ -135,6 +155,19 @@ public class Main2Activity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main2, menu);
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        try {
+            String profilePicURL = currentUser.getPhotoUrl().toString();
+            navUserPic = (ImageView) findViewById(R.id.navUserPic);
+            Picasso.with(getApplicationContext()).load(profilePicURL).into(navUserPic);
+            navUserName = (TextView) findViewById(R.id.navUserName);
+            navUserName.setText(currentUser.getDisplayName());
+            navUserEmail = (TextView) findViewById(R.id.navUserEmail);
+            navUserEmail.setText(currentUser.getEmail());
+        }catch (Exception e){
+            Log.d(TAG,e.toString());
+        }
         return true;
     }
 
@@ -169,7 +202,9 @@ public class Main2Activity extends AppCompatActivity
 
         } else if (id == R.id.nav_share) {
 
-        } else if (id == R.id.nav_send) {
+        }else if (id == R.id.nav_send) {
+
+        } else if (id == R.id.nav_logout) {
             AuthUI.getInstance()
                     .signOut(this)
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -203,6 +238,30 @@ public class Main2Activity extends AppCompatActivity
         ques.setText(question);
         return question;
     }
+
+//    public void randomizeQues (){
+//
+//        DatabaseReference QdatabaseReference = databaseReference.child("Questions");
+//        QdatabaseReference.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                Random r = new Random();
+//                int quesNum = r.nextInt(2);
+//
+//
+//
+//
+//                String q = String.format("q%d",quesNum);
+//                String question = dataSnapshot.child(q).getValue(String.class);
+//                ques.setText(question);
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
+//    }
 
     public void startGalleryChooser() {
         if (PermissionUtils.requestPermission(this, GALLERY_PERMISSIONS_REQUEST, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
