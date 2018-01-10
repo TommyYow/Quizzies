@@ -102,11 +102,6 @@ public class playFragment extends Fragment {
     public static final int CAMERA_PERMISSIONS_REQUEST = 2;
     public static final int CAMERA_IMAGE_REQUEST = 3;
 
-
-
-    //    private String question;
-    private String[] quesArray = {"DOG", "CAT", "COMPUTER", "BOTTLE", "KEYBOARD", "HANDPHONE", "SANDAL"};
-    private DatabaseReference mDatabase;
     private String question;
     public final List<String> quesL = new ArrayList<>();
 
