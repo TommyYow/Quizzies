@@ -1,6 +1,7 @@
-package com.example.user.quizzies;
+package com.example.user.quizzies.Fragment;
 
-import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -9,20 +10,22 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.user.quizzies.MainActivity;
+import com.example.user.quizzies.PackageManagerUtils;
+import com.example.user.quizzies.PermissionUtils;
+import com.example.user.quizzies.R;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -44,38 +47,98 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 
-public class MainActivity extends AppCompatActivity {
+/**
+ * A simple {@link Fragment} subclass.
+ * Activities that contain this fragment must implement the
+ * {@link scanFragment.OnFragmentInteractionListener} interface
+ * to handle interaction events.
+ * Use the {@link scanFragment#newInstance} factory method to
+ * create an instance of this fragment.
+ */
+public class scanFragment extends Fragment {
+    // TODO: Rename parameter arguments, choose names that match
+    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+    private static final String ARG_PARAM1 = "param1";
+    private static final String ARG_PARAM2 = "param2";
+
+    // TODO: Rename and change types of parameters
+    private String mParam1;
+    private String mParam2;
+
+    Button btnScan;
+    TextView textViewScanResult;
+    ImageView imageViewScan;
+
+
+
+
     private static final String CLOUD_VISION_API_KEY = "AIzaSyCM5C-pHsEdKSMyKeb34rX9-4nlwPpVnJM";
     public static final String FILE_NAME = "temp.jpg";
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
 
-    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String TAG = "View";
     private static final int GALLERY_PERMISSIONS_REQUEST = 0;
     private static final int GALLERY_IMAGE_REQUEST = 1;
     public static final int CAMERA_PERMISSIONS_REQUEST = 2;
     public static final int CAMERA_IMAGE_REQUEST = 3;
 
 
-    private ImageView mMainImage;
-    private TextView resultTxt;
-    private TextView ques;
-    private String question;
-    private String[] quesArray = {"DOG", "CAT", "COMPUTER", "BOTTLE", "KEYBOARD", "HANDPHONE", "SANDAL"};
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main2);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+
+
+
+
+
+
+    private OnFragmentInteractionListener mListener;
+
+    public scanFragment() {
+        // Required empty public constructor
+    }
+
+    /**
+     * Use this factory method to create a new instance of
+     * this fragment using the provided parameters.
+     *
+     * @param param1 Parameter 1.
+     * @param param2 Parameter 2.
+     * @return A new instance of fragment scanFragment.
+     */
+    // TODO: Rename and change types and number of parameters
+    public static scanFragment newInstance(String param1, String param2) {
+        scanFragment fragment = new scanFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_PARAM1, param1);
+        args.putString(ARG_PARAM2, param2);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            mParam1 = getArguments().getString(ARG_PARAM1);
+            mParam2 = getArguments().getString(ARG_PARAM2);
+        }
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View v = inflater.inflate(R.layout.fragment_scan, container, false);
+
+        btnScan = (Button) v.findViewById(R.id.btnScan);
+        imageViewScan = (ImageView) v.findViewById(R.id.ImageViewScan);
+        textViewScanResult = (TextView) v.findViewById(R.id.textViewScanResult);
+
+        btnScan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder
                         .setMessage(R.string.dialog_select_prompt)
                         .setPositiveButton(R.string.dialog_select_gallery, new DialogInterface.OnClickListener() {
@@ -94,27 +157,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        resultTxt= (TextView) findViewById(R.id.result);
-//        ques = (TextView) findViewById(R.id.ques);
-//        question = randomizeQues();
-//        mMainImage = (ImageView) findViewById(R.id.main_image);
+
+        return v;
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    public String randomizeQues (){
-        Random r = new Random();
-        int quesNum = r.nextInt(quesArray.length);
-        String question = quesArray[quesNum];
-        ques.setText(question);
-        return question;
-    }
 
     public void startGalleryChooser() {
-        if (PermissionUtils.requestPermission(this, GALLERY_PERMISSIONS_REQUEST, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        if (PermissionUtils.requestPermission(getActivity(), GALLERY_PERMISSIONS_REQUEST, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
             Intent intent = new Intent();
             intent.setType("image/*");
             intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -125,12 +174,12 @@ public class MainActivity extends AppCompatActivity {
 
     public void startCamera() {
         if (PermissionUtils.requestPermission(
-                this,
+                getActivity(),
                 CAMERA_PERMISSIONS_REQUEST,
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.CAMERA)) {
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.CAMERA)) {
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
+            Uri photoUri = FileProvider.getUriForFile(getActivity(), getActivity().getApplicationContext().getPackageName() + ".provider", getCameraFile());
             intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivityForResult(intent, CAMERA_IMAGE_REQUEST);
@@ -138,18 +187,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public File getCameraFile() {
-        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File dir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         return new File(dir, FILE_NAME);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == GALLERY_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
+        if (requestCode == GALLERY_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
             uploadImage(data.getData());
-        } else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
-            Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
+        } else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
+            Uri photoUri = FileProvider.getUriForFile(getActivity(), getActivity().getApplicationContext().getPackageName() + ".provider", getCameraFile());
             uploadImage(photoUri);
         }
     }
@@ -160,25 +209,25 @@ public class MainActivity extends AppCompatActivity {
                 // scale the image to save on bandwidth
                 Bitmap bitmap =
                         scaleBitmapDown(
-                                MediaStore.Images.Media.getBitmap(getContentResolver(), uri),
+                                MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri),
                                 1200);
 
                 callCloudVision(bitmap);
-                mMainImage.setImageBitmap(bitmap);
+                imageViewScan.setImageBitmap(bitmap);
 
             } catch (IOException e) {
                 Log.d(TAG, "Image picking failed because " + e.getMessage());
-                Toast.makeText(this, R.string.image_picker_error, Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity(), R.string.image_picker_error, Toast.LENGTH_LONG).show();
             }
         } else {
             Log.d(TAG, "Image picker gave us a null image.");
-            Toast.makeText(this, R.string.image_picker_error, Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), R.string.image_picker_error, Toast.LENGTH_LONG).show();
         }
     }
 
     private void callCloudVision(final Bitmap bitmap) throws IOException {
         // Switch text to loading
-        resultTxt.setText(R.string.loading_message);
+        textViewScanResult.setText(R.string.loading_message);
 
         // Do the real work in an async task, because we need to use the network anyway
         new AsyncTask<Object, Void, String>() {
@@ -199,10 +248,10 @@ public class MainActivity extends AppCompatActivity {
                                         throws IOException {
                                     super.initializeVisionRequest(visionRequest);
 
-                                    String packageName = getPackageName();
+                                    String packageName = getActivity().getPackageName();
                                     visionRequest.getRequestHeaders().set(ANDROID_PACKAGE_HEADER, packageName);
 
-                                    String sig = PackageManagerUtils.getSignature(getPackageManager(), packageName);
+                                    String sig = PackageManagerUtils.getSignature(getActivity().getPackageManager(), packageName);
 
                                     visionRequest.getRequestHeaders().set(ANDROID_CERT_HEADER, sig);
                                 }
@@ -261,13 +310,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             protected void onPostExecute(String result) {
-                if(result.toLowerCase().contains(question.toLowerCase())) {
-                    //resultTxt.setText(result);
-                    resultTxt.setText("CORRECT !!!!!!!!");
-                }
-                else{
-                    resultTxt.setText("WRONG. PLEASE TRY AGAIN.");
-                }
+                    textViewScanResult.setText(result);
+                    btnScan.setText("Scan Again");
             }
         }.execute();
     }
@@ -309,4 +353,76 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // TODO: Rename method, update argument and hook method into UI event
+    public void onButtonPressed(Uri uri) {
+        if (mListener != null) {
+            mListener.onFragmentInteraction(uri);
+        }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnFragmentInteractionListener) {
+            mListener = (OnFragmentInteractionListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnFragmentInteractionListener {
+        // TODO: Update argument type and name
+        void onFragmentInteraction(Uri uri);
+    }
 }
