@@ -5,13 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
@@ -20,17 +18,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.user.quizzies.Main2Activity;
+import com.example.user.quizzies.Model.Transaction;
 import com.example.user.quizzies.PackageManagerUtils;
 import com.example.user.quizzies.PermissionUtils;
 import com.example.user.quizzies.R;
-import com.firebase.ui.firestore.FirestoreArray;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -45,23 +39,20 @@ import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
 import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
-
-import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -103,11 +94,12 @@ public class playFragment extends Fragment {
     public static final int CAMERA_IMAGE_REQUEST = 3;
 
     private String question;
-    public final List<String> quesL = new ArrayList<>();
+    private final List<String> quesL = new ArrayList<>();
+    private long score;
+    private FirebaseAuth mAuth;
 
-
-
-
+    private static final Query sTransactionQuery =
+            FirebaseDatabase.getInstance().getReference().child("Transactions");
 
 
 
@@ -157,7 +149,8 @@ public class playFragment extends Fragment {
         btnSkip = (Button) v.findViewById(R.id.btnSkip);
         textViewQues = (TextView) v.findViewById(R.id.textViewQues);
         textViewResult = (TextView) v.findViewById(R.id.textViewResult);
-        imageViewBM = (ImageView) v.findViewById(R.id.ImageViewBM);
+        imageViewBM = (ImageView) v.findViewById(R.id.ImageViewBM) ;
+        mAuth = FirebaseAuth.getInstance();
 
         btnCamera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -183,10 +176,13 @@ public class playFragment extends Fragment {
             }
         });
 
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        final DatabaseReference myRef = database.getReference("Questions");
+        final String currentUserUID = mAuth.getCurrentUser().getUid();
 
-        myRef.addValueEventListener(new ValueEventListener() {
+        FirebaseDatabase databaseRef = FirebaseDatabase.getInstance();
+        final DatabaseReference quesRef = databaseRef.getReference("Questions");
+
+
+        quesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // This method is called once with the initial value and again
@@ -204,6 +200,24 @@ public class playFragment extends Fragment {
                 Log.w(TAG, "Failed to read value.", error.toException());
             }
         });
+
+        final DatabaseReference scoreRef = databaseRef.getReference().child("Users").child(currentUserUID).child("Score");
+        scoreRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.getValue() != null) {
+                    Log.e("SCORE: ", dataSnapshot.getValue().toString());
+                    score = dataSnapshot.getValue(long.class);
+                    Log.e("SCORE1: ", " " + score);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
 
         return v;
     }
@@ -280,6 +294,7 @@ public class playFragment extends Fragment {
     }
 
     private void callCloudVision(final Bitmap bitmap) throws IOException {
+
         // Switch text to loading
         textViewResult.setText(R.string.loading_message);
 
@@ -364,19 +379,36 @@ public class playFragment extends Fragment {
             }
 
             protected void onPostExecute(String result) {
+                final String currentUserUID = mAuth.getCurrentUser().getUid();
+                FirebaseDatabase databaseRef = FirebaseDatabase.getInstance();
+                final DatabaseReference scoreRef = databaseRef.getReference().child("Users").child(currentUserUID).child("Score");
+                String currDateTime = getCurrentDataTime();
+
+
                 if(result.toLowerCase().contains(question.toLowerCase())) {
                     //resultTxt.setText(result);
                     textViewResult.setTextColor(Color.parseColor("#00CC00"));
-                    textViewResult.setText("GOOD JOB! THIS IS A "+ question +" !");
+                    textViewResult.setText("GOOD JOB! THIS IS A "+ question +" ! \nPOINTS + 1 ! :D");
+                    score++;
+                    scoreRef.setValue(score);
+                    sTransactionQuery.getRef().push().setValue(new Transaction(currDateTime,question,"+ 1",currentUserUID));
                     btnSkip.setText("PLAY MORE !");
                 }
                 else{
                     textViewResult.setTextColor(Color.parseColor("#FF3333"));
-                    textViewResult.setText("OH SNAP! THIS IS NOT A "+ question + " ! TRY AGAIN !");
+                    textViewResult.setText("OH SNAP! THIS IS NOT A "+ question + " ! TRY AGAIN ! \nPOINTS - 1 ! :(");
+                    score--;
+                    scoreRef.setValue(score);
+                    sTransactionQuery.getRef().push().setValue(new Transaction(currDateTime,question,"- 1",currentUserUID));
                     btnSkip.setText("I GIVE UP ..");
                 }
             }
         }.execute();
+    }
+
+    private String getCurrentDataTime(){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd 'at' hh:mm:ss a");
+        return sdf.format(new Date());
     }
 
     public Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
@@ -414,31 +446,6 @@ public class playFragment extends Fragment {
 
         return message;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     // TODO: Rename method, update argument and hook method into UI event

@@ -3,15 +3,20 @@ package com.example.user.quizzies;
 import android.content.Intent;
 import android.support.annotation.MainThread;
 import android.support.annotation.StringRes;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
 import com.firebase.ui.auth.ErrorCodes;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.firebase.auth.FirebaseAuth;
 import com.firebase.ui.auth.AuthUI;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Arrays;
 
@@ -24,6 +29,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String GOOGLE_TOS_URL = "https://www.google.com/policies/terms/";
     private static final String GOOGLE_PRIVACY_POLICY_URL = "https://www.google.com/policies/privacy/";
     private FirebaseAuth mAuth;
+    private DatabaseReference mDatabase;
 
     @BindView(R.id.root)
     View mRootView;
@@ -32,6 +38,9 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        mAuth = FirebaseAuth.getInstance();
+        mDatabase = FirebaseDatabase.getInstance().getReference().child("Users");
     }
 
     @Override
@@ -40,7 +49,7 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         //if the user is signed in, launch homepage, else launch the sign in (AuthUI) Activity
         if (auth.getCurrentUser() != null) {
-            Intent i = new Intent(getApplicationContext(), Main2Activity.class);
+            Intent i = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(i);
             finish();
             return;
@@ -52,14 +61,11 @@ public class LoginActivity extends AppCompatActivity {
     public void signIn() {
         startActivityForResult(
                 AuthUI.getInstance().createSignInIntentBuilder()
-                        .setTheme(AuthUI.getDefaultTheme())
-                        //.setLogo(R.drawable.icon)
+                        .setTheme(R.style.AppThemeCustom)
+                        .setLogo(R.drawable.logo)
                         .setAvailableProviders(
                                 Arrays.asList(
-                                        //new AuthUI.IdpConfig.Builder(AuthUI.PHONE_VERIFICATION_PROVIDER).build(),
                                         new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
-                                        //new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build(),
-                                        //new AuthUI.IdpConfig.Builder(AuthUI.TWITTER_PROVIDER).build(),
                                         new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build()
                                 )
                         )
@@ -78,7 +84,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        showSnackbar(R.string.unknown_response);
+        showToast(R.string.unknown_response);
     }
 
     @MainThread
@@ -87,7 +93,8 @@ public class LoginActivity extends AppCompatActivity {
 
         // Successfully signed in
         if (resultCode == RESULT_OK) {
-            Intent intent = new Intent(getApplicationContext(), Main2Activity.class);
+            newAccount();
+            Intent intent = new Intent(getApplicationContext(), SuccessfulLoginActivity.class);
             startActivity(intent);
             finish();
             return;
@@ -95,26 +102,46 @@ public class LoginActivity extends AppCompatActivity {
             // Sign in failed
             if (response == null) {
                 // User pressed back button
-                //showSnackbar(R.string.sign_in_cancelled);
-                finish();
+                showToast(R.string.sign_in_cancelled);
+                super.onBackPressed();
                 return;
             }
 
             if (response.getErrorCode() == ErrorCodes.NO_NETWORK) {
-                showSnackbar(R.string.no_internet_connection);
+                showToast(R.string.no_internet_connection);
+                super.onBackPressed();
                 return;
             }
 
             if (response.getErrorCode() == ErrorCodes.UNKNOWN_ERROR) {
-                showSnackbar(R.string.unknown_error);
+                showToast(R.string.unknown_error);
+                super.onBackPressed();
                 return;
             }
         }
 
-        showSnackbar(R.string.unknown_sign_in_response);
+        showToast(R.string.unknown_sign_in_response);
     }
 
-    private void showSnackbar(@StringRes int errorMessageRes) {
-        Snackbar.make(findViewById(android.R.id.content), errorMessageRes, Snackbar.LENGTH_LONG).show();
+    private void newAccount(){
+        final String currentUserUID = mAuth.getCurrentUser().getUid();
+        mDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.hasChild(currentUserUID)) {
+                    DatabaseReference current_user = mDatabase.child(currentUserUID);
+                    current_user.child("Score").setValue(0);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void showToast(@StringRes int errorMessageRes) {
+        Toast.makeText(this, errorMessageRes, Toast.LENGTH_LONG).show();
     }
 }

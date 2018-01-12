@@ -2,5 +2,13 @@
 <resources>
     <color name="colorPrimary">#9999FF</color>
     <color name="colorPrimaryDark">#6666FF</color>
-    <color name="colorAccent">#ff4081</color>
+    <color name="colorAccent">#fe81ab</color>
+
+    <color name="material_lime_a700">#aeea00</color>
+    <color name="material_purple_a700">#AA00FF</color>
+    <color name="material_red_a200">#FF5252</color>
+
+    <color name="material_deep_purple_50">#EDE7F6</color>
+    <color name="material_deep_purple_500">#673AB7</color>
+    <color name="material_deep_purple_700">#512DA8</color>
 </resources>

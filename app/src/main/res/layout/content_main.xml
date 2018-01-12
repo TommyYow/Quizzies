@@ -8,7 +8,7 @@
     tools:context="com.example.user.quizzies.MainActivity"
     tools:showIn="@layout/activity_main"
     android:id="@+id/frame_container"
-    android:background="#FFFFFF">
+    android:background="@drawable/background">
 
 
 

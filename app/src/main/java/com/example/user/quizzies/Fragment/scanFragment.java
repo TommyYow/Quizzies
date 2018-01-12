@@ -22,7 +22,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.user.quizzies.MainActivity;
 import com.example.user.quizzies.PackageManagerUtils;
 import com.example.user.quizzies.PermissionUtils;
 import com.example.user.quizzies.R;
@@ -70,9 +69,6 @@ public class scanFragment extends Fragment {
     TextView textViewScanResult;
     ImageView imageViewScan;
 
-
-
-
     private static final String CLOUD_VISION_API_KEY = "AIzaSyCM5C-pHsEdKSMyKeb34rX9-4nlwPpVnJM";
     public static final String FILE_NAME = "temp.jpg";
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
@@ -83,14 +79,6 @@ public class scanFragment extends Fragment {
     private static final int GALLERY_IMAGE_REQUEST = 1;
     public static final int CAMERA_PERMISSIONS_REQUEST = 2;
     public static final int CAMERA_IMAGE_REQUEST = 3;
-
-
-
-
-
-
-
-
 
     private OnFragmentInteractionListener mListener;
 
